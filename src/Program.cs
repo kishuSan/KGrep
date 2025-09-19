@@ -18,7 +18,7 @@ namespace codecrafters_grep.src
 
             var matcher = new PatternMatcher(inputLine);
 
-            if (matcher.MatchPattern(pattern))
+            if (matcher.StreamMatchPattern(pattern))
             {
                 Environment.Exit(0);
             }

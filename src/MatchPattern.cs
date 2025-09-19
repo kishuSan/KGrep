@@ -1,32 +1,76 @@
 ﻿using System;
+using System.ComponentModel;
+using System.ComponentModel.Design;
 
 internal class PatternMatcher
 {
     string InputLine { get; set; }
+    string MatchInput { get; set; }
     internal PatternMatcher(string ip = "")
     {
         InputLine = ip;
     }
-    internal bool MatchPattern(string pattern)
-    {
-        Console.WriteLine(InputLine);
-        Console.WriteLine(pattern);
 
+    internal bool StreamMatchPattern(string pattern)
+    {
         if(InputLine == null)
         {
             throw new ArgumentException("Input line is null");
         }
+        if(pattern == null || pattern.Length == 0)
+        {
+            throw new ArgumentException("Pattern is null or empty");
+        }
 
+        int i = 0;
+        int j = 0;
+        while(i < pattern.Length && j < InputLine.Length)
+        {
+            string ParsedPattern = "";
+            if (pattern[i] == '[')
+            {
+                while (pattern[i] != ']' && i < pattern.Length)
+                {
+                    ParsedPattern += pattern[i++];
+                }
+                // handle case where there is no closing ']'
+            }
+            else if (pattern[i] == '\\')
+            {
+                ParsedPattern += pattern[i++];
+                if (i < pattern.Length) ParsedPattern += pattern[i++];
+            }
+            else ParsedPattern += pattern[i++];
+
+            MatchInput = InputLine[j++].ToString();
+            
+            Console.WriteLine("Matched Input: " + MatchInput);
+            Console.WriteLine("Parsed Pattern: " + ParsedPattern);
+            
+            if (!MatchPattern(ParsedPattern))
+            {
+                return false;
+            }
+        }
+        if(i < pattern.Length || j < InputLine.Length)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    internal bool MatchPattern(string pattern)
+    {
         switch (pattern[0])
         {
         case '\\':
             if(pattern == "\\d")
             {
-                return MatchDigit(pattern);
+                return MatchDigit();
             }
             else if (pattern == "\\w")
             {
-                return MatchWord(pattern);
+                return MatchWord();
             }
             else
             {
@@ -48,16 +92,16 @@ internal class PatternMatcher
 
     private bool MatchSingleChar(char pattern)
     {
-        foreach (char ch in InputLine)
+        foreach (char ch in MatchInput)
         {
             if (ch == pattern) return true;
         }
         return false;
     }
 
-    private bool MatchWord(string pattern)
+    private bool MatchWord()
     {
-        foreach (char ch in InputLine)
+        foreach (char ch in MatchInput)
         {
             //Console.WriteLine("Char: " + ch + " Value: " + (int)ch);
             if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ch == '_') 
@@ -65,9 +109,9 @@ internal class PatternMatcher
         }
         return false;
     }
-    private bool MatchDigit(string pattern)
+    private bool MatchDigit()
     {
-        foreach(char ch in InputLine)
+        foreach(char ch in MatchInput)
         {
             //int val = ch - '0';
             //Console.WriteLine("Char: " + ch + " Value: " + val);
@@ -90,7 +134,7 @@ internal class PatternMatcher
     }
     private bool MatchPositiveCharSet(HashSet<char> charset)
     {
-        foreach(char ch in InputLine)
+        foreach(char ch in MatchInput)
         {
             if(charset.Contains(ch))
             {
@@ -101,7 +145,7 @@ internal class PatternMatcher
     }
     private bool MatchNegativeCharSet(HashSet<char> charset)
     {
-        foreach(char ch in InputLine)
+        foreach(char ch in MatchInput)
         {
             if(!charset.Contains(ch))
             {
