@@ -11,7 +11,7 @@ internal class PatternMatcher
         {
              return inputLine.Contains(pattern);
         }
-        else if(pattern.Length == 2 && pattern == "\\d")
+        else if(pattern == "\\d")
         {
             foreach(char ch in inputLine)
             {
@@ -23,6 +23,17 @@ internal class PatternMatcher
                 }
             }
             return false;
+        }
+        else if(pattern == "\\w")
+        {
+            foreach (char ch in inputLine)
+            {
+                if(ch == '!' || ch == '?' || ch == '$')
+                {
+                    return false;
+                }
+            }
+            return true;
         }
         else
         {
