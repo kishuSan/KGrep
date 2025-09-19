@@ -15,7 +15,9 @@ internal class PatternMatcher
         {
             foreach(char ch in inputLine)
             {
-                if ('0' <= ch - '0' || ch - '0' <= 9)
+                //int val = ch - '0';
+                //Console.WriteLine("Char: " + ch + " Value: " + val);
+                if ('0' <= ch && ch <= '9')
                 {
                     return true;
                 }
