@@ -7,7 +7,15 @@ internal class PatternMatcher
     {
         Console.WriteLine(inputLine);
         Console.WriteLine(pattern);
-        if (pattern.Length >= 2 && pattern[0] == '[')
+        if (pattern.Length == 1)
+        {
+            foreach (char ch in inputLine)
+            {
+                if(ch == pattern[0]) return true;
+            }
+            return false;
+        }
+        else if (pattern.Length >= 2 && pattern[0] == '[')
         {
             HashSet<char> charset = new HashSet<char>();
             for(int i = 1; i < pattern.Length-1; i++)
