@@ -2,61 +2,112 @@
 
 internal class PatternMatcher
 {
-
-    internal bool MatchPattern(string inputLine, string pattern)
+    string InputLine { get; set; }
+    internal PatternMatcher(string ip = "")
     {
-        Console.WriteLine(inputLine);
+        InputLine = ip;
+    }
+    internal bool MatchPattern(string pattern)
+    {
+        Console.WriteLine(InputLine);
         Console.WriteLine(pattern);
-        if (pattern.Length == 1)
+
+        if(InputLine == null)
         {
-            foreach (char ch in inputLine)
-            {
-                if(ch == pattern[0]) return true;
-            }
-            return false;
+            throw new ArgumentException("Input line is null");
         }
-        else if (pattern.Length >= 2 && pattern[0] == '[')
+
+        switch (pattern[0])
         {
-            HashSet<char> charset = new HashSet<char>();
-            for(int i = 1; i < pattern.Length-1; i++)
+        case '\\':
+            if(pattern == "\\d")
             {
-                charset.Add(pattern[i]);
+                return MatchDigit(pattern);
             }
-            foreach(char ch in inputLine)
+            else if (pattern == "\\w")
             {
-                if(charset.Contains(ch))
-                {
-                    return true;
-                }
+                return MatchWord(pattern);
             }
-            return false;
+            else
+            {
+                throw new ArgumentException($"Unhandled pattern: {pattern}");
+            }
+        case '[':
+            return MatchCharSet(pattern);
+        default:
+            if(pattern.Length == 1)
+            {
+                return MatchSingleChar(pattern[0]);
+            }
+            else
+            {
+                throw new ArgumentException($"Unhandled pattern: {pattern}");
+            }
         }
-        else if(pattern == "\\d")
+    }
+
+    private bool MatchSingleChar(char pattern)
+    {
+        foreach (char ch in InputLine)
         {
-            foreach(char ch in inputLine)
-            {
-                //int val = ch - '0';
-                //Console.WriteLine("Char: " + ch + " Value: " + val);
-                if ('0' <= ch && ch <= '9')
-                {
-                    return true;
-                }
-            }
-            return false;
+            if (ch == pattern) return true;
         }
-        else if(pattern == "\\w")
+        return false;
+    }
+
+    private bool MatchWord(string pattern)
+    {
+        foreach (char ch in InputLine)
         {
-            foreach (char ch in inputLine)
-            {
-                //Console.WriteLine("Char: " + ch + " Value: " + (int)ch);
-                if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ch == '_') 
-                    return true;
-            }
-            return false;
+            //Console.WriteLine("Char: " + ch + " Value: " + (int)ch);
+            if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ch == '_') 
+                return true;
         }
-        else
+        return false;
+    }
+    private bool MatchDigit(string pattern)
+    {
+        foreach(char ch in InputLine)
         {
-            throw new ArgumentException($"Unhandled pattern: {pattern}");
+            //int val = ch - '0';
+            //Console.WriteLine("Char: " + ch + " Value: " + val);
+            if ('0' <= ch && ch <= '9')
+            {
+                return true;
+            }
         }
+        return false;
+    }
+    private bool MatchCharSet(string pattern)
+    {
+        HashSet<char> charset = new HashSet<char>();
+        int start = pattern[1] == '^' ? 2 : 1;
+        for(int i = start; i < pattern.Length-1; i++)
+        {
+            charset.Add(pattern[i]);
+        }
+        return start == 1 ? MatchPositiveCharSet(charset) : MatchNegativeCharSet(charset);
+    }
+    private bool MatchPositiveCharSet(HashSet<char> charset)
+    {
+        foreach(char ch in InputLine)
+        {
+            if(charset.Contains(ch))
+            {
+                return true;
+            }
+        }
+        return false; 
+    }
+    private bool MatchNegativeCharSet(HashSet<char> charset)
+    {
+        foreach(char ch in InputLine)
+        {
+            if(!charset.Contains(ch))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -16,9 +16,9 @@ namespace codecrafters_grep.src
             string pattern = args[1];
             string inputLine = Console.In.ReadToEnd();
 
-            var matcher = new PatternMatcher();
+            var matcher = new PatternMatcher(inputLine);
 
-            if (matcher.MatchPattern(inputLine, pattern))
+            if (matcher.MatchPattern(pattern))
             {
                 Environment.Exit(0);
             }
