@@ -28,10 +28,8 @@ internal class PatternMatcher
         {
             foreach (char ch in inputLine)
             {
-                if(ch == '!' || ch == '?' || ch == '$')
-                {
-                    return false;
-                }
+                if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ch == '_') continue;
+                else return false;
             }
             return true;
         }
