@@ -28,15 +28,15 @@ internal class PatternMatcher
         {
             foreach (char ch in inputLine)
             {
-                if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ch == '_') continue;
-                else return false;
+                Console.WriteLine("Char: " + ch + " Value: " + (int)ch);
+                if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ('0' <= ch && ch <= '9') || ch == '_') 
+                    return true;
             }
-            return true;
+            return false;
         }
         else
         {
             throw new ArgumentException($"Unhandled pattern: {pattern}");
         }
-        return false;
     }
 }
