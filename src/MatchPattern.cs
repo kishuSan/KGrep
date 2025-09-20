@@ -4,9 +4,9 @@ using System.ComponentModel.Design;
 
 internal class PatternMatcher
 {
-    string InputLine { get; set; }
+    string? InputLine { get; set; }
     string MatchInput { get; set; }
-    internal PatternMatcher(string ip = "")
+    internal PatternMatcher(string ip = null)
     {
         InputLine = ip;
     }
@@ -42,20 +42,21 @@ internal class PatternMatcher
             }
             else ParsedPattern += pattern[i++];
 
-            MatchInput = InputLine[j++].ToString();
+            MatchInput = InputLine[j].ToString();
             
             Console.WriteLine("Matched Input: " + MatchInput);
             Console.WriteLine("Parsed Pattern: " + ParsedPattern);
             
-            if (!MatchPattern(ParsedPattern))
+            while (!MatchPattern(ParsedPattern) && ++j < InputLine.Length)
             {
-                return false;
+                MatchInput = InputLine[j].ToString();
+                Console.WriteLine("Matched Input: " + MatchInput);
+                Console.WriteLine("Parsed Pattern: " + ParsedPattern);
             }
+
+            j++;
         }
-        if(i < pattern.Length || j < InputLine.Length)
-        {
-            return false;
-        }
+        if (i < pattern.Length) return false;
         return true;
     }
 
