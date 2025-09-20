@@ -103,7 +103,12 @@ internal class KGrep
         if (startOfTheString)
         {
             patternOffset = 1;
-            if(Match(inputOffset, patternOffset)) return true;
+            if (Match(inputOffset, patternOffset))
+            {
+                if (!endOfTheString) return true;
+                //means end of the string matching regex is present
+                if(InputLine.Length == Patterns.Count-2) return true;
+            }
             return false;
         }
 
