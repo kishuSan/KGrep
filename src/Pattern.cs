@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,12 +13,14 @@ namespace codecrafters_grep.src
         internal PatternType type; // d, w, lc, cs, ncs
         internal HashSet<char> CharSet;
         internal bool negated;
+        //internal char literal;
 
         internal Pattern()
         {
             CharSet = new HashSet<char>();
             type = PatternType.literalChar;
             negated = false;
+            //literal = '\0';
         }
     }
 
@@ -28,6 +31,9 @@ namespace codecrafters_grep.src
         literalChar,
         charSet,
         nCharSet,
+        matchZeroOrOne,
+        matchZeroOrMore,
+        matchOneOrMore,
         startOfString,
         endOfString,
     }

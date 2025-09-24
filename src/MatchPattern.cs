@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.ComponentModel.Design;
+using System.Runtime.InteropServices;
 using codecrafters_grep.src;
 
 internal class KGrep
@@ -84,8 +85,22 @@ internal class KGrep
             }
             else
             {
+                //curr_pattern.literal = pattern[i];
                 curr_pattern.type = PatternType.literalChar;
                 curr_pattern.CharSet.Add(pattern[i]);
+            }
+            
+            if (i + 1 < pattern.Length)
+            {
+                i++;
+                if (pattern[i] == '*')
+                    curr_pattern.type = PatternType.matchZeroOrMore;
+                else if (pattern[i] == '?')
+                    curr_pattern.type = PatternType.matchZeroOrOne;
+                else if (pattern[i] == '+')
+                    curr_pattern.type = PatternType.matchOneOrMore;
+                else
+                    i--;
             }
             i++;
             Patterns.Add(curr_pattern);
@@ -94,55 +109,110 @@ internal class KGrep
 
     internal bool MatchPattern()
     {
-        bool endOfTheString = Patterns.Count > 0 && Patterns.Last().type == PatternType.endOfString;
+        //bool endOfTheString = Patterns.Count > 0 && Patterns.Last().type == PatternType.endOfString;
         bool startOfTheString = Patterns.Count > 0 && Patterns[0].type == PatternType.startOfString;
-
-        int patternOffset = 0;
-        int inputOffset = 0;
 
         if (startOfTheString)
         {
-            patternOffset = 1;
-            if (Match(inputOffset, patternOffset))
-            {
-                if (!endOfTheString) return true;
-                //means end of the string matching regex is present
-                if(InputLine.Length == Patterns.Count-2) return true;
-            }
-            return false;
+            int pattern_idx = 0, input_idx = 0;
+            return Match(ref pattern_idx, ref input_idx);
         }
 
         for (int i = 0; i <= InputLine.Length; i++)
         {
-            if (Match(i, patternOffset))
-            {
-                if (endOfTheString)
-                {
-                    if (i + Patterns.Count - patternOffset - 1 == InputLine.Length) return true;
-                    else continue;
-                }
+            int input_idx = i;
+            int pattern_idx = 0;
+            if (Match(ref pattern_idx, ref input_idx))
                 return true;
-            }
         }
 
         return false;
     }
 
-    internal bool Match(int inputoffset, int patternOffset)
+    internal bool Match(ref int pattern_idx, ref int input_idx)
     {
-        int end = Patterns.Count - (Patterns.Last().type == PatternType.endOfString ? 1 : 0);
-        for(int i = patternOffset; i < end; i++, inputoffset++)
-        {
-            if (inputoffset >= InputLine.Length) return false;
+        //base case and endOfString,
+        if (pattern_idx == Patterns.Count || (Patterns[pattern_idx].type == PatternType.endOfString && input_idx == InputLine.Length))
+            return true;
 
-            char ch = InputLine[inputoffset];
-            if (Patterns[i].negated)
-            {
-                if (Patterns[i].CharSet.Contains(ch)) return false;
-            }
-            else if(!Patterns[i].CharSet.Contains(ch)) return false;
+        if(input_idx >= InputLine.Length)
+            return false;
+
+        Pattern curr_p = Patterns[pattern_idx];
+        PatternType curr_pt = curr_p.type;
+
+        //startOfString,
+        if (curr_pt == PatternType.startOfString && input_idx == 0)
+        {
+            pattern_idx++;
+            return Match(ref pattern_idx, ref input_idx);
         }
-        //if(i == Patterns.Count) return true;
-        return true;
+
+        //digit, word, literalChar, charSet
+        if ((curr_pt == PatternType.digit
+            || curr_pt == PatternType.word
+            || curr_pt == PatternType.literalChar
+            || curr_pt == PatternType.charSet
+            ) && curr_p.CharSet.Contains(InputLine[input_idx]))
+        {
+            pattern_idx++; input_idx++;
+            return Match(ref pattern_idx, ref input_idx);
+        }
+
+        //nCharSet,
+        if (curr_pt == PatternType.nCharSet && !curr_p.CharSet.Contains(InputLine[input_idx]))
+        {
+            pattern_idx++; input_idx++;
+            return Match(ref pattern_idx, ref input_idx);
+        }
+
+        //matchOneOrMore,
+        if (curr_pt == PatternType.matchOneOrMore)
+        {
+            return MatchMultiple(ref pattern_idx, ref input_idx, false);
+            //pattern_idx++;
+            //return Match(ref pattern_idx, ref input_idx);
+        } 
+        
+        //matchZeroOrMore,
+        if (curr_pt == PatternType.matchZeroOrMore)
+        {
+            return MatchMultiple(ref pattern_idx, ref input_idx, true);
+            //pattern_idx++;
+            //return Match(ref pattern_idx, ref input_idx);
+        }
+
+        //matchZeroOrOne,
+        if(curr_pt == PatternType.matchZeroOrOne)
+        {
+            if (curr_p.CharSet.Contains(InputLine[input_idx]))
+                input_idx++;
+            pattern_idx++;
+            return Match(ref pattern_idx, ref input_idx);
+        }
+
+        return false;
+    }
+
+    internal bool MatchMultiple(ref int pattern_idx, ref int input_idx, bool star)
+    {
+        if (star)
+        {
+            // try to match rest of pattern with zero matches of star 
+            int p_idx = pattern_idx + 1;
+            int i_idx = input_idx;
+            if (Match(ref p_idx, ref i_idx))
+                return true;
+        }
+        Pattern curr_p = Patterns[pattern_idx];
+        while (input_idx < InputLine.Length && curr_p.CharSet.Contains(InputLine[input_idx]))
+        {
+            input_idx++;
+            int p_idx = pattern_idx + 1;
+            int i_idx = input_idx;
+            if (Match(ref p_idx, ref i_idx))
+                return true;
+        }
+        return false;
     }
 }
