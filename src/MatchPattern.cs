@@ -185,10 +185,17 @@ internal class KGrep
         //matchZeroOrOne,
         if(curr_pt == PatternType.matchZeroOrOne)
         {
-            if (curr_p.CharSet.Contains(InputLine[input_idx]))
-                input_idx++;
             pattern_idx++;
-            return Match(ref pattern_idx, ref input_idx);
+            int p_idx = pattern_idx;
+            int i_idx = input_idx;
+            if(Match(ref p_idx, ref i_idx)){
+                return true;
+            }
+            if (curr_p.CharSet.Contains(InputLine[input_idx]))
+            {
+                input_idx++;
+                return Match(ref pattern_idx, ref input_idx);
+            }
         }
 
         return false;
