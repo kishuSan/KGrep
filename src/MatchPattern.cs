@@ -83,6 +83,11 @@ internal class KGrep
                     throw new ArgumentException("Invalid Pattern: " + pattern);
                 }
             }
+            else if (pattern[i] == '.')
+            {
+                curr_pattern.type = PatternType.wildCard;
+                curr_pattern.wild = true;
+            }
             else
             {
                 //curr_pattern.literal = pattern[i];
@@ -148,6 +153,14 @@ internal class KGrep
             return Match(ref pattern_idx, ref input_idx);
         }
 
+        // wildcard
+        if(curr_pt == PatternType.wildCard)
+        {
+            pattern_idx++;
+            input_idx++;
+            return Match(ref pattern_idx, ref input_idx); 
+        }
+
         //digit, word, literalChar, charSet
         if ((curr_pt == PatternType.digit
             || curr_pt == PatternType.word
@@ -191,7 +204,7 @@ internal class KGrep
             if(Match(ref p_idx, ref i_idx)){
                 return true;
             }
-            if (curr_p.CharSet.Contains(InputLine[input_idx]))
+            if (curr_p.wild || curr_p.CharSet.Contains(InputLine[input_idx]))
             {
                 input_idx++;
                 return Match(ref pattern_idx, ref input_idx);
@@ -212,7 +225,7 @@ internal class KGrep
                 return true;
         }
         Pattern curr_p = Patterns[pattern_idx];
-        while (input_idx < InputLine.Length && curr_p.CharSet.Contains(InputLine[input_idx]))
+        while (input_idx < InputLine.Length && (curr_p.wild ? true : curr_p.CharSet.Contains(InputLine[input_idx])))
         {
             input_idx++;
             int p_idx = pattern_idx + 1;

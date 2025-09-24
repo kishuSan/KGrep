@@ -13,6 +13,7 @@ namespace codecrafters_grep.src
         internal PatternType type; // d, w, lc, cs, ncs
         internal HashSet<char> CharSet;
         internal bool negated;
+        internal bool wild;
         //internal char literal;
 
         internal Pattern()
@@ -36,5 +37,6 @@ namespace codecrafters_grep.src
         matchOneOrMore,
         startOfString,
         endOfString,
+        wildCard,
     }
 }
