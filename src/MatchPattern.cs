@@ -10,7 +10,7 @@ internal class KGrep
     private string InputLine { get; }
     
     // dynamic array sequence of the parsed patterns
-    private List<Pattern> Patterns { get; }
+    private List<List<Pattern>> Patterns { get; }
 
     internal KGrep(string input, string pattern)
     {
@@ -18,15 +18,18 @@ internal class KGrep
         if (pattern == null || pattern.Length == 0) throw new ArgumentNullException("Pattern is null or empty");
 
         InputLine = input;
-        Patterns = new List<Pattern>();
-        ParsePattern(pattern); // parse the pattern into a sequence
+        Patterns = new List<List<Pattern>>();
+        Patterns = ParsePattern(pattern); // parse the pattern into a sequence
     }
 
-    private void ParsePattern(string pattern)
+    private List<List<Pattern>> ParsePattern(string pattern)
     {
+        int j = 0;
         int i = 0;
+        List<List<Pattern>> patterns = new List<List<Pattern>>();
         while (i < pattern.Length)
         {
+            patterns.Add(new List<Pattern>());
             Pattern curr_pattern = new Pattern();
             if (pattern[i] == '^')
             {
@@ -68,7 +71,6 @@ internal class KGrep
                 curr_pattern.type = PatternType.charSet;
                 if (i + 1 < pattern.Length && pattern[i + 1] == '^') {
                     curr_pattern.type = PatternType.nCharSet;
-                    curr_pattern.negated = true;
                     i++;
                 }
 
@@ -88,9 +90,30 @@ internal class KGrep
                 curr_pattern.type = PatternType.wildCard;
                 curr_pattern.wild = true;
             }
+            else if (pattern[i] == '(')
+            {
+                Stack<char> s1 = new Stack<char>('(');
+                int start = i + 1;
+                int alternate = 0;
+                while(++i < pattern.Length && s1.Count() != 0)
+                {
+                    if (pattern[i] == '|') alternate = i + 1; // starting of alternate pattern
+                    if (pattern[i] == '(') s1.Push('('); // to handle nested groups
+                    else if (pattern[i] == ')') s1.Pop();
+                }
+
+                if (alternate != 0)
+                {
+                    patterns[j][0] = ParsePattern(pattern.Substring(start, alternate - start - 1));
+                    patterns[j][1] = ParsePattern(pattern.Substring(alternate, i - alternate - 1));  
+                }
+                else
+                {
+                    patterns[j] = ParsePattern(pattern.Substring(start, i - start - 1));
+                } 
+            }
             else
             {
-                //curr_pattern.literal = pattern[i];
                 curr_pattern.type = PatternType.literalChar;
                 curr_pattern.CharSet.Add(pattern[i]);
             }
@@ -108,8 +131,9 @@ internal class KGrep
                     i--;
             }
             i++;
-            Patterns.Add(curr_pattern);
+            patterns[j].Add(curr_pattern);
         }
+        return patterns;
     }
 
     internal bool MatchPattern()
@@ -183,16 +207,12 @@ internal class KGrep
         if (curr_pt == PatternType.matchOneOrMore)
         {
             return MatchMultiple(ref pattern_idx, ref input_idx, false);
-            //pattern_idx++;
-            //return Match(ref pattern_idx, ref input_idx);
         } 
         
         //matchZeroOrMore,
         if (curr_pt == PatternType.matchZeroOrMore)
         {
             return MatchMultiple(ref pattern_idx, ref input_idx, true);
-            //pattern_idx++;
-            //return Match(ref pattern_idx, ref input_idx);
         }
 
         //matchZeroOrOne,

@@ -12,16 +12,12 @@ namespace codecrafters_grep.src
         //introduce an enum for the following types
         internal PatternType type; // d, w, lc, cs, ncs
         internal HashSet<char> CharSet;
-        internal bool negated;
         internal bool wild;
-        //internal char literal;
 
         internal Pattern()
         {
             CharSet = new HashSet<char>();
             type = PatternType.literalChar;
-            negated = false;
-            //literal = '\0';
         }
     }
 
@@ -38,5 +34,7 @@ namespace codecrafters_grep.src
         startOfString,
         endOfString,
         wildCard,
+        group,
+        alternate,
     }
 }
