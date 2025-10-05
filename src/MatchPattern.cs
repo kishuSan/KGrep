@@ -57,7 +57,7 @@ internal class KGrep
     {
         foreach (Pattern p in tokens)
         {
-            Console.WriteLine(string.Concat(Enumerable.Repeat("  ", depth * 4)) + p.type + " " + (p.wild ? "wild" : "") + " " + string.Join("", p.CharSet) + ", ");
+            Console.WriteLine(string.Concat(Enumerable.Repeat("  ", depth * 4)) + p.type + " " + (p.backrefIndex == 0 ? "" : p.backrefIndex) + (p.wild ? "wild" : "") + " " + string.Join("", p.CharSet) + ", ");
             if (p.subPatterns.Count > 0)
             {
                 int i = 0;
@@ -160,6 +160,31 @@ internal class KGrep
                     for (char x = 'a'; x <= 'z'; x++) curr_pattern.CharSet.Add(x);
                     for (char x = 'A'; x <= 'Z'; x++) curr_pattern.CharSet.Add(x);
                     curr_pattern.CharSet.Add('_');
+                }
+                else if(esc == 's')
+                {
+                    curr_pattern.type = PatternType.charSet;
+                    curr_pattern.CharSet.Add(' ');
+                    curr_pattern.CharSet.Add('\t');
+                    curr_pattern.CharSet.Add('\n');
+                    curr_pattern.CharSet.Add('\r');
+                    curr_pattern.CharSet.Add('\f');
+                    curr_pattern.CharSet.Add('\v');
+                }
+                else if (IsDigit(esc))
+                {
+                    int grp_num = esc - '0';
+                    while (i + 1 < pattern.Length && IsDigit(pattern[i + 1]))
+                    {
+                        grp_num = grp_num * 10 + (pattern[++i] - '0');
+                    }
+                    if (grp_num > num_groups)
+                    {
+                        throw new ArgumentException("Invalid backreference \\" + esc + " at position " + (i - 1));
+                    }
+                    curr_pattern.type = PatternType.backref;
+                    curr_pattern.backrefIndex = grp_num;
+                    //backref implementation pending
                 }
                 else
                 {
@@ -291,7 +316,6 @@ internal class KGrep
             return Match(ref tokens, ref token_idx, ref input_idx);
         }
 
-
         //alternate,
         if(curr_pt == PatternType.alternate)
         {
@@ -351,6 +375,18 @@ internal class KGrep
             if(Match(ref sub_pat_copy, ref sub_token_idx, ref input_idx))
             {
                 groups.Insert(grp_idx_local, InputLine.Substring(start, input_idx-start));
+                token_idx++;
+                return Match(ref tokens, ref token_idx, ref input_idx);
+            }
+        }
+
+        if(curr_pt == PatternType.backref)
+        {
+            string grp_str = groups[curr_p.backrefIndex];
+            int len = grp_str.Length;
+            if (len > 0 && input_idx + len <= InputLine.Length && InputLine.Substring(input_idx, len) == grp_str)
+            {
+                input_idx += len;
                 token_idx++;
                 return Match(ref tokens, ref token_idx, ref input_idx);
             }

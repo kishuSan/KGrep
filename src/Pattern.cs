@@ -13,6 +13,7 @@ namespace codecrafters_grep.src
         internal PatternType type; // d, w, lc, cs, ncs
         internal HashSet<char> CharSet;
         internal bool wild;
+        internal int backrefIndex; // for backreference type
         internal List<List<Pattern>> subPatterns { get; set; } // for alternate type
         // 0 row -> first alternate
         // 1 row -> second alternate
@@ -41,5 +42,6 @@ namespace codecrafters_grep.src
         wildCard,
         group,
         alternate,
+        backref,
     }
 }
