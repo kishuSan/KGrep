@@ -58,7 +58,7 @@ internal class KGrep
     {
         foreach (Pattern p in tokens)
         {
-            Console.Write(string.Concat(Enumerable.Repeat("  ", depth * 4)) + p.type + " " + (p.wild ? "wild" : "") + " " + string.Join("", p.CharSet) + ", ");
+            Console.WriteLine(string.Concat(Enumerable.Repeat("  ", depth * 4)) + p.type + " " + (p.wild ? "wild" : "") + " " + string.Join("", p.CharSet) + ", ");
             if (p.subPatterns.Count > 0)
             {
                 int i = 0;
@@ -126,8 +126,9 @@ internal class KGrep
                     curr_pattern.subPatterns.Add(alternate);
                 }
                 tokens.Clear();
-                //tokens.Add(curr_pattern);
-                //if (i >= pattern.Length) return tokens;
+                tokens.Add(curr_pattern);
+                //if (i >= pattern.Length) 
+                return tokens;
             }
             else if (pattern[i] == '^')
             {
