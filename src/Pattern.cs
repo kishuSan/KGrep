@@ -14,6 +14,7 @@ namespace codecrafters_grep.src
         internal HashSet<char> CharSet;
         internal bool wild;
         internal int backrefIndex; // for backreference type
+        internal int groupIndex; // for group type
         internal List<List<Pattern>> subPatterns { get; set; } // for alternate type
         // 0 row -> first alternate
         // 1 row -> second alternate

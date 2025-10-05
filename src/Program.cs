@@ -14,8 +14,8 @@ namespace codecrafters_grep.src
             }
 
             string pattern = args[1];
-            string inputLine = Console.In.ReadToEnd();
-            //  string inputLine = "I see 1 cat";
+            //string inputLine = Console.In.ReadToEnd();
+            string inputLine = "cat and dog";
             
             Console.WriteLine("InputLine: " + inputLine);
             Console.WriteLine("Input Pattern: " + pattern);

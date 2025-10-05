@@ -21,8 +21,6 @@ internal class KGrep
     // count number of groups
     private int num_groups = 0;
 
-    private int grp_idx = 0; // to track the current group index for backref
-
     internal KGrep(string input, string pattern)
     {
         if (input == null || input.Length == 0) throw new ArgumentNullException("Input line is null");
@@ -57,7 +55,13 @@ internal class KGrep
     {
         foreach (Pattern p in tokens)
         {
-            Console.WriteLine(string.Concat(Enumerable.Repeat("  ", depth * 4)) + p.type + " " + (p.backrefIndex == 0 ? "" : p.backrefIndex) + (p.wild ? "wild" : "") + " " + string.Join("", p.CharSet) + ", ");
+            Console.WriteLine(string.Concat(
+                Enumerable.Repeat("  ", depth * 4)) 
+                + p.type + " " 
+                + (p.groupIndex == 0 ? "" : p.groupIndex)
+                + (p.backrefIndex == 0 ? "" : p.backrefIndex) 
+                + (p.wild ? "wild" : "") 
+                + " " + string.Join("", p.CharSet) + ", ");
             if (p.subPatterns.Count > 0)
             {
                 int i = 0;
@@ -91,6 +95,7 @@ internal class KGrep
                 num_groups++;
                 groupcheck.Push('(');
                 int curr_size_group = groupcheck.Count();
+                curr_pattern.groupIndex = num_groups;
                 curr_pattern.type = PatternType.group;
                 curr_pattern.subPatterns.Add(Tokenizer(pattern, ref i));
                 if(groupcheck.Count() == curr_size_group)
@@ -369,14 +374,13 @@ internal class KGrep
         {
             int start = input_idx;
             int sub_token_idx = 0;
-            grp_idx++;
-            int grp_idx_local = grp_idx;
+            int ip_copy = input_idx;
             List<Pattern> sub_pat_copy = new List<Pattern>(curr_p.subPatterns[0]);
-            if(Match(ref sub_pat_copy, ref sub_token_idx, ref input_idx))
+            if(Match(ref sub_pat_copy, ref sub_token_idx, ref ip_copy))
             {
-                groups.Insert(grp_idx_local, InputLine.Substring(start, input_idx-start));
+                groups.Insert(curr_p.groupIndex, InputLine.Substring(start, ip_copy-start));
                 token_idx++;
-                return Match(ref tokens, ref token_idx, ref input_idx);
+                return Match(ref tokens, ref token_idx, ref ip_copy);
             }
         }
 
