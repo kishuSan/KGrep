@@ -29,7 +29,6 @@ internal class KGrep
         if (pattern == null || pattern.Length == 0) throw new ArgumentNullException("Pattern is null or empty");
 
         InputLine = input;
-        //groups = new List<string>();
         groupcheck = new Stack<char>();
         Tokens = new List<Pattern>();
         int idx = 0;
@@ -226,7 +225,7 @@ internal class KGrep
         bool startOfTheString = Tokens.Count > 0 && Tokens[0].type == PatternType.startOfString;
         List<Pattern> Tokens_copy = new List<Pattern>(Tokens);
 
-        groups = Enumerable.Repeat<string>(null, num_groups+1).ToList();
+        groups = Enumerable.Repeat<string>("", num_groups+1).ToList();
 
         if (startOfTheString)
         {
@@ -251,7 +250,9 @@ internal class KGrep
         if (token_idx == tokens.Count || (tokens[token_idx].type == PatternType.endOfString && input_idx == InputLine.Length))
             return true;
         // overflow of input line
-        if (input_idx >= InputLine.Length)
+        if (tokens[token_idx].type != PatternType.matchZeroOrOne 
+            && token_idx[token_idx].type != PatternType.matchZeroOrMore 
+            && input_idx >= InputLine.Length)
             return false;
 
         Pattern curr_p = tokens[token_idx];

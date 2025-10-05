@@ -15,7 +15,7 @@ namespace codecrafters_grep.src
 
             string pattern = args[1];
             string inputLine = Console.In.ReadToEnd();
-            //  string inputLine = "cat";
+            //  string inputLine = "I see 1 cat";
             
             Console.WriteLine("InputLine: " + inputLine);
             Console.WriteLine("Input Pattern: " + pattern);
