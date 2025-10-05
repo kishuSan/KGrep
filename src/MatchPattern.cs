@@ -251,7 +251,7 @@ internal class KGrep
             return true;
         // overflow of input line
         if (tokens[token_idx].type != PatternType.matchZeroOrOne 
-            && token_idx[token_idx].type != PatternType.matchZeroOrMore 
+            && tokens[token_idx].type != PatternType.matchZeroOrMore 
             && input_idx >= InputLine.Length)
             return false;
 
