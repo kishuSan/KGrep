@@ -14,6 +14,10 @@ internal class KGrep
 
     // to store the backref matches
     private List<List<string>> groups; 
+
+    // global stack to maintain the groups, it also helps to prevent unwanted parsing of groups.
+    Stack<char> groupcheck;
+
     internal KGrep(string input, string pattern)
     {
         if (input == null || input.Length == 0) throw new ArgumentNullException("Input line is null");
@@ -21,6 +25,7 @@ internal class KGrep
 
         InputLine = input;
         groups = new List<List<string>>();
+        groupcheck = new Stack<char>();
         Tokens = new List<Pattern>();
         int idx = 0;
         Tokens = Tokenizer(pattern, ref idx); // parse the pattern into a sequence
@@ -36,7 +41,7 @@ internal class KGrep
     {
         foreach (Pattern p in tokens)
         {
-            Console.Write(string.Concat(Enumerable.Repeat("  ", depth * 4)) + p.type + " " + (p.wild ? "wild" : "") + " " + string.Join("", p.CharSet));
+            Console.Write(string.Concat(Enumerable.Repeat("  ", depth * 4)) + p.type + " " + (p.wild ? "wild" : "") + " " + string.Join("", p.CharSet) + ", ");
             if (p.subPatterns.Count > 0)
             {
                 int i = 0;
@@ -66,9 +71,15 @@ internal class KGrep
                 // group start
                 // ?can also add the group number to store the backref
                 i++;
+                groupcheck.Push('(');
+                int curr_size_group = groupcheck.Count();
                 curr_pattern.type = PatternType.group;
                 curr_pattern.subPatterns.Add(Tokenizer(pattern, ref i));
                 tokens.Add(curr_pattern);
+                if(groupcheck.Count() == curr_size_group)
+                {
+                    throw new ArgumentException("Unmatched opening parenthesis at position " + (i - 1));
+                }
                 if (i >= pattern.Length){
                     return tokens;
                 }
@@ -76,8 +87,13 @@ internal class KGrep
             }
             if (pattern[i] == ')')
             {
+                if(groupcheck.Count() == 0)
+                {
+                    throw new ArgumentException("Unmatched closing parenthesis at position " + i);
+                }
                 // group end
                 i++;
+                groupcheck.Pop();
                 return tokens;
             }
             if (pattern[i] == '|')
