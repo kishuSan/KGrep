@@ -14,8 +14,8 @@ namespace codecrafters_grep.src
             }
 
             string pattern = args[1];
-            //string inputLine = Console.In.ReadToEnd();
-            string inputLine = "cat";
+            string inputLine = Console.In.ReadToEnd();
+            //  string inputLine = "cat";
             
             Console.WriteLine("InputLine: " + inputLine);
             Console.WriteLine("Input Pattern: " + pattern);
@@ -23,15 +23,16 @@ namespace codecrafters_grep.src
             var matcher = new KGrep(inputLine, pattern);
 
             matcher.PrintPatternWrapper();
-            //if (matcher.MatchPattern())
-            //{
-            //    Environment.Exit(0);
-            //}
-            //else
-            //{
-            //    Environment.Exit(1);
-            //}
-            Environment.Exit(0); // Temporary exit code for testing purposes
+            if (matcher.MatchPattern())
+            {
+                matcher.PrintMatchedGroups(); 
+                Environment.Exit(0);
+            }
+            else
+            {
+                Environment.Exit(1);
+            }
+            // Environment.Exit(0); // Temporary exit code for testing purposes
         }
     }
   }
