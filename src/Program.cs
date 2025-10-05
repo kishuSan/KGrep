@@ -14,21 +14,24 @@ namespace codecrafters_grep.src
             }
 
             string pattern = args[1];
-            string inputLine = Console.In.ReadToEnd();
+            //string inputLine = Console.In.ReadToEnd();
+            string inputLine = "cat";
             
-            Console.WriteLine(inputLine);
-            Console.WriteLine(pattern);
+            Console.WriteLine("InputLine: " + inputLine);
+            Console.WriteLine("Input Pattern: " + pattern);
 
             var matcher = new KGrep(inputLine, pattern);
 
-            if (matcher.MatchPattern())
-            {
-                Environment.Exit(0);
-            }
-            else
-            {
-                Environment.Exit(1);
-            }
+            matcher.PrintPatternWrapper();
+            //if (matcher.MatchPattern())
+            //{
+            //    Environment.Exit(0);
+            //}
+            //else
+            //{
+            //    Environment.Exit(1);
+            //}
+            Environment.Exit(0); // Temporary exit code for testing purposes
         }
     }
   }

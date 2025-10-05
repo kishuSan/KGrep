@@ -13,11 +13,16 @@ namespace codecrafters_grep.src
         internal PatternType type; // d, w, lc, cs, ncs
         internal HashSet<char> CharSet;
         internal bool wild;
+        internal List<List<Pattern>> subPatterns { get; set; } // for alternate type
+        // 0 row -> first alternate
+        // 1 row -> second alternate
+        // ...
 
         internal Pattern()
         {
             CharSet = new HashSet<char>();
             type = PatternType.literalChar;
+            subPatterns = new List<List<Pattern>>();
         }
     }
 

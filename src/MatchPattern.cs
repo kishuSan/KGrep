@@ -8,39 +8,111 @@ internal class KGrep
 {
     // input line given by the user
     private string InputLine { get; }
-    
-    // dynamic array sequence of the parsed patterns
-    private List<List<Pattern>> Patterns { get; }
 
+    // dynamic array sequence of the parsed patterns
+    private List<Pattern> Tokens { get; }
+
+    // to store the backref matches
+    private List<List<string>> groups; 
     internal KGrep(string input, string pattern)
     {
         if (input == null || input.Length == 0) throw new ArgumentNullException("Input line is null");
         if (pattern == null || pattern.Length == 0) throw new ArgumentNullException("Pattern is null or empty");
 
         InputLine = input;
-        Patterns = new List<List<Pattern>>();
-        Patterns = ParsePattern(pattern); // parse the pattern into a sequence
+        groups = new List<List<string>>();
+        Tokens = new List<Pattern>();
+        int idx = 0;
+        Tokens = Tokenizer(pattern, ref idx); // parse the pattern into a sequence
     }
 
-    private List<List<Pattern>> ParsePattern(string pattern)
+    public void PrintPatternWrapper()
     {
-        int j = 0;
-        int i = 0;
-        List<List<Pattern>> patterns = new List<List<Pattern>>();
+        Console.WriteLine("Printing the parsed tokens from the given inputed pattern");
+        PrintPattern(Tokens, 0, 0);
+    }
+
+    private void PrintPattern(List<Pattern> tokens, int depth, int idx)
+    {
+        foreach (Pattern p in tokens)
+        {
+            Console.Write(string.Concat(Enumerable.Repeat("  ", depth * 4)) + p.type + " " + (p.wild ? "wild" : "") + " " + string.Join("", p.CharSet));
+            if (p.subPatterns.Count > 0)
+            {
+                int i = 0;
+                foreach (List<Pattern> sub in p.subPatterns)
+                {
+                Console.WriteLine();
+                    Console.WriteLine(
+                        string.Concat(Enumerable.Repeat("=>", depth * 4)) + 
+                        " subPattern " + 
+                        new string('0', depth) + 
+                        (idx * 10 + i++)
+                    );
+                    PrintPattern(sub, depth + 1, i-1);
+                }
+            }
+        }
+    }
+
+    private List<Pattern> Tokenizer(string pattern, ref int i)
+    {
+        List<Pattern> tokens = new List<Pattern>();
         while (i < pattern.Length)
         {
-            patterns.Add(new List<Pattern>());
             Pattern curr_pattern = new Pattern();
+            if (pattern[i] == '(')
+            {
+                // group start
+                // ?can also add the group number to store the backref
+                i++;
+                curr_pattern.type = PatternType.group;
+                curr_pattern.subPatterns.Add(Tokenizer(pattern, ref i));
+                tokens.Add(curr_pattern);
+                if (i >= pattern.Length){
+                    return tokens;
+                }
+                else continue;
+            }
+            if (pattern[i] == ')')
+            {
+                // group end
+                i++;
+                return tokens;
+            }
+            if (pattern[i] == '|')
+            {
+                // alternate
+                i++;
+                curr_pattern.type = PatternType.alternate;
+                curr_pattern.subPatterns.Add(new List<Pattern>(tokens));
+                List<Pattern> alternate = Tokenizer(pattern, ref i);
+                if (alternate[0].type == PatternType.alternate)
+                {
+                    foreach (List<Pattern> x in alternate[0].subPatterns)
+                    curr_pattern.subPatterns.Add(x);
+                }
+                else
+                {
+                    curr_pattern.subPatterns.Add(alternate);
+                }
+                tokens.Clear();
+                tokens.Add(curr_pattern);
+                if (i >= pattern.Length) return tokens;
+            }
             if (pattern[i] == '^')
             {
+                // start of the string
                 curr_pattern.type = PatternType.startOfString;
             }
             else if (pattern[i] == '$')
             {
+                // end of the string
                 curr_pattern.type = PatternType.endOfString;
             }
             else if (pattern[i] == '\\')
             {
+                // either the esc char of to match digit, word, space or literal char
                 if (i + 1 >= pattern.Length)
                 {
                     throw new ArgumentException("Dangling escape at end of pattern");
@@ -68,8 +140,10 @@ internal class KGrep
             }
             else if (pattern[i] == '[')
             {
+                // match the charset
                 curr_pattern.type = PatternType.charSet;
-                if (i + 1 < pattern.Length && pattern[i + 1] == '^') {
+                if (i + 1 < pattern.Length && pattern[i + 1] == '^')
+                {
                     curr_pattern.type = PatternType.nCharSet;
                     i++;
                 }
@@ -87,39 +161,20 @@ internal class KGrep
             }
             else if (pattern[i] == '.')
             {
+                // wildcard
                 curr_pattern.type = PatternType.wildCard;
                 curr_pattern.wild = true;
             }
-            else if (pattern[i] == '(')
-            {
-                Stack<char> s1 = new Stack<char>('(');
-                int start = i + 1;
-                int alternate = 0;
-                while(++i < pattern.Length && s1.Count() != 0)
-                {
-                    if (pattern[i] == '|') alternate = i + 1; // starting of alternate pattern
-                    if (pattern[i] == '(') s1.Push('('); // to handle nested groups
-                    else if (pattern[i] == ')') s1.Pop();
-                }
-
-                if (alternate != 0)
-                {
-                    patterns[j][0] = ParsePattern(pattern.Substring(start, alternate - start - 1));
-                    patterns[j][1] = ParsePattern(pattern.Substring(alternate, i - alternate - 1));  
-                }
-                else
-                {
-                    patterns[j] = ParsePattern(pattern.Substring(start, i - start - 1));
-                } 
-            }
             else
             {
+                // literal char
                 curr_pattern.type = PatternType.literalChar;
                 curr_pattern.CharSet.Add(pattern[i]);
             }
-            
+
             if (i + 1 < pattern.Length)
             {
+                // to check the muiltiple match operators
                 i++;
                 if (pattern[i] == '*')
                     curr_pattern.type = PatternType.matchZeroOrMore;
@@ -131,15 +186,15 @@ internal class KGrep
                     i--;
             }
             i++;
-            patterns[j].Add(curr_pattern);
+            tokens.Add(curr_pattern);
         }
-        return patterns;
+        return tokens;
     }
 
     internal bool MatchPattern()
     {
-        //bool endOfTheString = Patterns.Count > 0 && Patterns.Last().type == PatternType.endOfString;
-        bool startOfTheString = Patterns.Count > 0 && Patterns[0].type == PatternType.startOfString;
+        //bool endOfTheString = Tokens.Count > 0 && Tokens.Last().type == PatternType.endOfString;
+        bool startOfTheString = Tokens.Count > 0 && Tokens[0].type == PatternType.startOfString;
 
         if (startOfTheString)
         {
@@ -161,13 +216,13 @@ internal class KGrep
     internal bool Match(ref int pattern_idx, ref int input_idx)
     {
         //base case and endOfString,
-        if (pattern_idx == Patterns.Count || (Patterns[pattern_idx].type == PatternType.endOfString && input_idx == InputLine.Length))
+        if (pattern_idx == Tokens.Count || (Tokens[pattern_idx].type == PatternType.endOfString && input_idx == InputLine.Length))
             return true;
 
-        if(input_idx >= InputLine.Length)
+        if (input_idx >= InputLine.Length)
             return false;
 
-        Pattern curr_p = Patterns[pattern_idx];
+        Pattern curr_p = Tokens[pattern_idx];
         PatternType curr_pt = curr_p.type;
 
         //startOfString,
@@ -178,11 +233,11 @@ internal class KGrep
         }
 
         // wildcard
-        if(curr_pt == PatternType.wildCard)
+        if (curr_pt == PatternType.wildCard)
         {
             pattern_idx++;
             input_idx++;
-            return Match(ref pattern_idx, ref input_idx); 
+            return Match(ref pattern_idx, ref input_idx);
         }
 
         //digit, word, literalChar, charSet
@@ -207,8 +262,8 @@ internal class KGrep
         if (curr_pt == PatternType.matchOneOrMore)
         {
             return MatchMultiple(ref pattern_idx, ref input_idx, false);
-        } 
-        
+        }
+
         //matchZeroOrMore,
         if (curr_pt == PatternType.matchZeroOrMore)
         {
@@ -216,12 +271,13 @@ internal class KGrep
         }
 
         //matchZeroOrOne,
-        if(curr_pt == PatternType.matchZeroOrOne)
+        if (curr_pt == PatternType.matchZeroOrOne)
         {
             pattern_idx++;
             int p_idx = pattern_idx;
             int i_idx = input_idx;
-            if(Match(ref p_idx, ref i_idx)){
+            if (Match(ref p_idx, ref i_idx))
+            {
                 return true;
             }
             if (curr_p.wild || curr_p.CharSet.Contains(InputLine[input_idx]))
@@ -244,7 +300,7 @@ internal class KGrep
             if (Match(ref p_idx, ref i_idx))
                 return true;
         }
-        Pattern curr_p = Patterns[pattern_idx];
+        Pattern curr_p = Tokens[pattern_idx];
         while (input_idx < InputLine.Length && (curr_p.wild ? true : curr_p.CharSet.Contains(InputLine[input_idx])))
         {
             input_idx++;
@@ -254,5 +310,16 @@ internal class KGrep
                 return true;
         }
         return false;
+    }
+
+    //helper methods
+    private bool IsDigit(char c)
+    {
+        return c >= '0' && c <= '9';
+    }
+
+    private bool IsWord(char c)
+    {
+        return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || IsDigit(c) || c == '_';
     }
 }
