@@ -166,16 +166,16 @@ internal class KGrep
                     for (char x = 'A'; x <= 'Z'; x++) curr_pattern.CharSet.Add(x);
                     curr_pattern.CharSet.Add('_');
                 }
-                else if(esc == 's')
-                {
-                    curr_pattern.type = PatternType.charSet;
-                    curr_pattern.CharSet.Add(' ');
-                    curr_pattern.CharSet.Add('\t');
-                    curr_pattern.CharSet.Add('\n');
-                    curr_pattern.CharSet.Add('\r');
-                    curr_pattern.CharSet.Add('\f');
-                    curr_pattern.CharSet.Add('\v');
-                }
+                //else if(esc == 's')
+                //{
+                //    curr_pattern.type = PatternType.charSet;
+                //    curr_pattern.CharSet.Add(' ');
+                //    curr_pattern.CharSet.Add('\t');
+                //    curr_pattern.CharSet.Add('\n');
+                //    curr_pattern.CharSet.Add('\r');
+                //    curr_pattern.CharSet.Add('\f');
+                //    curr_pattern.CharSet.Add('\v');
+                //}
                 else if (IsDigit(esc))
                 {
                     int grp_num = esc - '0';
@@ -189,7 +189,6 @@ internal class KGrep
                     }
                     curr_pattern.type = PatternType.backref;
                     curr_pattern.backrefIndex = grp_num;
-                    //backref implementation pending
                 }
                 else
                 {
@@ -378,6 +377,7 @@ internal class KGrep
             List<Pattern> sub_pat_copy = new List<Pattern>(curr_p.subPatterns[0]);
             if(Match(ref sub_pat_copy, ref sub_token_idx, ref ip_copy))
             {
+                // try and match all combination of the group with the pattern
                 groups.Insert(curr_p.groupIndex, InputLine.Substring(start, ip_copy-start));
                 token_idx++;
                 return Match(ref tokens, ref token_idx, ref ip_copy);
